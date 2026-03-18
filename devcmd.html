@@ -564,6 +564,12 @@
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 <input type="text" id="searchInput" placeholder="명령어, 설명 검색 (/)">
             </div>
+            <select id="sortOrder" class="btn" style="height: 36px; padding: 0 8px; font-size: 12px; width: auto;">
+                <option value="default">기본 순서</option>
+                <option value="recent">최근 추가순</option>
+                <option value="name">이름순</option>
+                <option value="fav">즐겨찾기 우선</option>
+            </select>
         </div>
         <div class="header-right">
             <button id="exportBtn" class="btn" title="데이터 내보내기 (JSON)">
@@ -815,6 +821,7 @@
 
         function renderAll() {
             const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            const sort = document.getElementById('sortOrder').value;
             const main = document.getElementById('mainContent');
             const empty = document.getElementById('emptyState');
             
@@ -825,6 +832,19 @@
                 if (q && !matchesQuery(c, q)) return false;
                 return true;
             });
+
+            // Sorting
+            if (sort === 'recent') {
+                list.sort((a, b) => b.id - a.id);
+            } else if (sort === 'name') {
+                list.sort((a, b) => a.desc.localeCompare(b.desc));
+            } else if (sort === 'fav') {
+                list.sort((a, b) => {
+                    const af = favorites.has(a.id) ? 1 : 0;
+                    const bf = favorites.has(b.id) ? 1 : 0;
+                    return bf - af || a.id - b.id;
+                });
+            }
 
             if (list.length === 0) {
                 main.querySelectorAll('.stack-group').forEach(el => el.remove());
@@ -1047,6 +1067,7 @@
 
         // --- Search & Fav Toggle ---
         document.getElementById('searchInput').oninput = renderAll;
+        document.getElementById('sortOrder').onchange = renderAll;
         document.getElementById('favOnlyBtn').onclick = () => {
             favOnly = !favOnly;
             document.getElementById('favOnlyBtn').classList.toggle('active', favOnly);
