@@ -583,9 +583,12 @@
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                 즐겨찾기
             </button>
-            <button id="addBtn" class="btn btn-primary">
+            <button id="addBtn" class="btn btn-primary" title="명령어 추가">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-                추가
+                명령어 추가
+            </button>
+            <button id="manageStacksBtn" class="btn" title="스택 관리">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
         </div>
     </header>
@@ -649,9 +652,33 @@
         </div>
     </div>
 
+    <!-- Manage Stacks Modal -->
+    <div id="stackModalOverlay" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>스택 관리</h3>
+                <button id="closeStackModal" class="action-btn">✕</button>
+            </div>
+            <div class="form-group">
+                <label>새 스택 추가</label>
+                <div class="form-row">
+                    <input type="text" id="sLabel" placeholder="스택 이름 (예: Go, AWS)">
+                    <input type="color" id="sColor" value="#8c877f" style="width: 50px; padding: 2px;">
+                    <button id="addStackBtn" class="btn btn-primary">추가</button>
+                </div>
+            </div>
+            <div id="stackList" style="margin-top: 20px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+                <!-- Stack items injected here -->
+            </div>
+            <div class="modal-footer">
+                <button id="finishStackBtn" class="btn btn-primary">완료</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- Data Definitions ---
-        const STACKS = [
+        const BASE_STACKS = [
             { id: 'all',     label: '전체',     color: '#8c877f' },
             { id: 'git',     label: 'Git',      color: '#d4500a' },
             { id: 'docker',  label: 'Docker',   color: '#1d6fa4' },
@@ -665,6 +692,12 @@
             { id: 'linux',   label: 'Linux/CLI',color: '#4a4640' },
             { id: 'custom',  label: '커스텀',    color: '#8c877f' }
         ];
+
+        let customStacks = JSON.parse(localStorage.getItem('dcmd_stacks') || '[]');
+        
+        function getStacks() {
+            return [...BASE_STACKS, ...customStacks];
+        }
 
         const ALL_TAGS = ['setup', 'run', 'build', 'deploy', 'db', 'migrate', 'test', 'debug', 'git', 'package', 'docker', 'env', 'ci', 'log', 'network', 'security', 'perf', 'custom'];
 
@@ -798,7 +831,7 @@
 
         function renderTabs() {
             const container = document.getElementById('stackTabs');
-            container.innerHTML = STACKS.map(s => `
+            container.innerHTML = getStacks().map(s => `
                 <div class="tab ${activeStack === s.id ? 'active' : ''}" onclick="setStack('${s.id}')">
                     ${s.label}
                 </div>
@@ -865,7 +898,7 @@
             main.querySelectorAll('.stack-group').forEach(el => el.remove());
 
             // Sorted stacks (as per STACKS array order)
-            STACKS.forEach(s => {
+            getStacks().forEach(s => {
                 if (grouped[s.id]) {
                     const stackEl = document.createElement('div');
                     stackEl.className = 'stack-group';
@@ -977,7 +1010,7 @@
         const tagSelector = document.getElementById('tagSelector');
 
         function initModal() {
-            fStack.innerHTML = STACKS.filter(s => s.id !== 'all').map(s => `
+            fStack.innerHTML = getStacks().filter(s => s.id !== 'all').map(s => `
                 <option value="${s.id}">${s.label}</option>
             `).join('');
 
@@ -1007,6 +1040,7 @@
             editId = item ? item.id : null;
             document.getElementById('modalTitle').innerText = editId ? '명령어 수정' : '명령어 추가';
             
+            initModal(); // Refresh stack list
             document.getElementById('fStack').value = item ? item.stack : (activeStack === 'all' ? 'git' : activeStack);
             document.getElementById('fCategory').value = item ? item.category : '';
             document.getElementById('fDesc').value = item ? item.desc : '';
@@ -1063,6 +1097,57 @@
             persist();
             closeModal();
             renderAll();
+        };
+
+        // --- Manage Stacks ---
+        const stackModal = document.getElementById('stackModalOverlay');
+        document.getElementById('manageStacksBtn').onclick = () => {
+            renderStackList();
+            stackModal.style.display = 'flex';
+        };
+        document.getElementById('closeStackModal').onclick = () => stackModal.style.display = 'none';
+        document.getElementById('finishStackBtn').onclick = () => stackModal.style.display = 'none';
+        stackModal.onclick = (e) => { if (e.target === stackModal) stackModal.style.display = 'none'; };
+
+        function renderStackList() {
+            const list = document.getElementById('stackList');
+            list.innerHTML = customStacks.map(s => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 12px; height: 12px; border-radius: 2px; background: ${s.color};"></div>
+                        <span style="font-weight: 500;">${s.label}</span>
+                        <span style="font-size: 11px; color: var(--text3);">${s.id}</span>
+                    </div>
+                    <button class="action-btn" onclick="deleteStack('${s.id}')">✕</button>
+                </div>
+            `).join('') || '<div style="padding: 20px; text-align: center; color: var(--text3);">추가된 커스텀 스택이 없습니다.</div>';
+        }
+
+        document.getElementById('addStackBtn').onclick = () => {
+            const label = document.getElementById('sLabel').value.trim();
+            const color = document.getElementById('sColor').value;
+            if (!label) return;
+
+            const id = label.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (getStacks().some(s => s.id === id)) {
+                alert('이미 존재하는 스택 ID입니다.');
+                return;
+            }
+
+            customStacks.push({ id, label, color });
+            localStorage.setItem('dcmd_stacks', JSON.stringify(customStacks));
+            document.getElementById('sLabel').value = '';
+            renderStackList();
+            renderTabs();
+        };
+
+        window.deleteStack = (id) => {
+            if (confirm('스택을 삭제하시겠습니까? 해당 스택의 명령어는 유지되지만 필터에서 사라집니다.')) {
+                customStacks = customStacks.filter(s => s.id !== id);
+                localStorage.setItem('dcmd_stacks', JSON.stringify(customStacks));
+                renderStackList();
+                renderTabs();
+            }
         };
 
         // --- Search & Fav Toggle ---
