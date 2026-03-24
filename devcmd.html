@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevCMD — 스택별 개발 명령어 레퍼런스</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================
+       CSS VARIABLES — 디자인 토큰
+       ========================================================= */
+    :root {
+      --bg:        #f7f6f2;
+      --surface:   #ffffff;
+      --surface2:  #f2f0eb;
+      --border:    #e2ddd5;
+      --border2:   #cdc8be;
+      --text:      #1c1a17;
+      --text2:     #4a4640;
+      --text3:     #8c877f;
+      --accent:    #d4500a;
+      --accent-bg: #fef3ec;
+      --accent-bd: #f5c9a8;
+      --font-logo: 'Fraunces', serif;
+      --font-sans: 'Noto Sans KR', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --header-h:   60px;
+      --tabs-h:     44px;
+      --sidebar-l:  180px;   /* 좌측 (프레임워크) */
+      --sidebar-r:  156px;   /* 우측 (태그) */
+    }
+
+    /* =========================================================
+       RESET
+       ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* =========================================================
+       HEADER
+       ========================================================= */
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+      gap: 12px;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-right { display: flex; align-items: center; gap: 6px; }
+
+    .logo {
+      font-family: var(--font-logo);
+      font-weight: 600;
+      font-style: italic;
+      font-size: 20px;
+      color: var(--accent);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .search-wrap { position: relative; width: 260px; }
+    .search-wrap input {
+      width: 100%;
+      height: 34px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0 10px 0 32px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text);
+      outline: none;
+    }
+    .search-wrap input:focus { border-color: var(--accent-bd); background: var(--surface); }
+    .search-wrap .ico {
+      position: absolute; left: 9px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3); pointer-events: none;
+    }
+
+    /* =========================================================
+       BUTTONS
+       ========================================================= */
+    .btn {
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: background .15s, border-color .15s;
+    }
+    .btn:hover { background: var(--surface2); border-color: var(--border2); }
+    .btn-icon { width: 34px; padding: 0; justify-content: center; }
+    .btn-primary { background: var(--accent); color: #fff; border-color: transparent; }
+    .btn-primary:hover { background: #b54508; border-color: transparent; }
+    .btn-fav.active { color: #d4a017; border-color: #f5d76e; background: #fffdf5; }
+
+    /* =========================================================
+       CATEGORY TABS (상단 — 언어 그룹)
+       ========================================================= */
+    .cat-tabs {
+      position: fixed;
+      top: var(--header-h); left: 0; right: 0;
+      height: var(--tabs-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 4px;
+      overflow-x: auto;
+      white-space: nowrap;
+      z-index: 90;
+      scrollbar-width: none;
+    }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+
+    .cat-tab {
+      padding: 0 14px;
+      height: 28px;
+      border-radius: 14px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      color: var(--text2);
+      transition: background .15s;
+    }
+    .cat-tab:hover { background: var(--surface2); }
+    .cat-tab.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-bd); }
+    .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    /* =========================================================
+       LEFT SIDEBAR (프레임워크 / 라이브러리)
+       ========================================================= */
+    .sidebar-l {
+      position: fixed;
+      top: calc(var(--header-h) + var(--tabs-h));
+      left: 0; bottom: 0;
+      width: var(--sidebar-l);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 14px 0;
+      overflow-y: auto;
+      z-index: 80;
+    }
+
+    .sidebar-label {
+      padding: 0 14px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    .stack-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text2);
+      transition: background .1s;
+    }
+    .stack-item:hover { background: var(--surface2); }
+    .stack-item.active { background: var(--accent-bg); color: var(--accent); }
+    .stack-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .stack-count { margin-left: auto; font-size: 10px; font-family: var(--font-mono); color: var(--text3); }
+
+    /* =========================================================
+       RIGHT SIDEBAR (태그)
+       ========================================================= */
+    .sidebar-r {
+      position: fixed;
+      top: calc(var(--header-h) + var(--tabs-h));
+      right: 0; bottom: 0;
+      width: var(--sidebar-r);
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 14px 0;
+      overflow-y: auto;
+      z-index: 80;
+    }
+
+    .tag-item {
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text2);
+      display: block;
+      transition: background .1s;
+    }
+    .tag-item:hover { background: var(--surface2); }
+    .tag-item.active { color: var(--accent); font-weight: 700; background: var(--accent-bg); }
+
+    /* =========================================================
+       MAIN CONTENT
+       ========================================================= */
+    main {
+      margin-top: calc(var(--header-h) + var(--tabs-h));
+      margin-left: var(--sidebar-l);
+      margin-right: var(--sidebar-r);
+      padding: 24px 28px;
+      min-height: 100vh;
+    }
+
+    .stack-group { margin-bottom: 40px; }
+
+    .stack-group-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+    .stack-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: #fff;
+      text-transform: uppercase;
+    }
+    .stack-group-title { font-family: var(--font-logo); font-size: 17px; font-weight: 600; }
+
+    .category-section { margin-bottom: 24px; }
+    .category-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      font-family: var(--font-mono);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .category-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .command-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 14px;
+    }
+
+    /* =========================================================
+       COMMAND CARD
+       ========================================================= */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform .15s, box-shadow .15s, border-color .15s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.06); border-color: var(--border2); }
+
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .card-title { font-size: 13.5px; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .card-actions { display: flex; gap: 3px; flex-shrink: 0; }
+
+    .action-btn {
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      color: var(--text3);
+      transition: background .1s, color .1s;
+    }
+    .action-btn:hover { background: var(--surface2); color: var(--text2); }
+    .action-btn.fav-btn.active { color: #d4a017; border-color: #f5d76e; background: #fffdf5; }
+
+    .card-when { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+    .card-cmd-box {
+      background: var(--surface2);
+      border-left: 3px solid var(--accent);
+      padding: 10px 12px;
+      border-radius: 0 6px 6px 0;
+    }
+    .card-cmd { font-family: var(--font-mono); font-size: 11.5px; color: var(--text); white-space: pre-wrap; word-break: break-all; }
+
+    .card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag-badge { font-family: var(--font-mono); font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 4px; }
+
+    /* =========================================================
+       TAG COLOR MAP
+       to add a new tag: add CSS class .t-{id} here
+       ========================================================= */
+    .t-setup    { background: #edf5fc; color: #1d6fa4 }
+    .t-run      { background: #eaf5ef; color: #1a7a50 }
+    .t-db       { background: #f0ecfc; color: #6340c0 }
+    .t-build    { background: #fef8e6; color: #a06a00 }
+    .t-deploy   { background: #f0ecfc; color: #6340c0 }
+    .t-debug    { background: #fcecea; color: #c0302a }
+    .t-test     { background: #e9f6f5; color: #0d7a78 }
+    .t-git      { background: #fef3ec; color: #d4500a }
+    .t-package  { background: #f4edfb; color: #7c3aed }
+    .t-docker   { background: #edf5fc; color: #1d6fa4 }
+    .t-env      { background: #eaf5ef; color: #1a7a50 }
+    .t-migrate  { background: #f0ecfc; color: #6340c0 }
+    .t-ci       { background: #fef3ec; color: #d4500a }
+    .t-log      { background: #fef8e6; color: #a06a00 }
+    .t-network  { background: #e9f6f5; color: #0d7a78 }
+    .t-security { background: #fcecea; color: #c0302a }
+    .t-perf     { background: #f4edfb; color: #7c3aed }
+    .t-custom   { background: #f2f0eb; color: #4a4640 }
+
+    /* =========================================================
+       MODAL
+       ========================================================= */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.48);
+      display: none; justify-content: center; align-items: center;
+      z-index: 200;
+    }
+    .modal {
+      background: var(--surface);
+      width: 520px; max-width: 92vw; max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.18);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .modal-header h3 { font-size: 16px; font-weight: 600; }
+    .form-group { margin-bottom: 13px; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; }
+    label { display: block; font-size: 10.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+    input[type="text"], select, textarea {
+      width: 100%; border: 1px solid var(--border); border-radius: 6px;
+      padding: 7px 10px; font-family: var(--font-sans); font-size: 13px;
+      color: var(--text); background: var(--surface); outline: none;
+    }
+    input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--accent-bd); }
+    textarea { resize: vertical; min-height: 76px; font-family: var(--font-mono); font-size: 12px; }
+    .tag-selector { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .tag-choice {
+      font-family: var(--font-mono); font-size: 10px; padding: 3px 8px;
+      border-radius: 4px; border: 1px solid var(--border);
+      background: var(--surface2); cursor: pointer; transition: all .1s;
+    }
+    .tag-choice.selected { border-color: var(--accent-bd); background: var(--accent-bg); color: var(--accent); }
+    .modal-footer { margin-top: 18px; display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* =========================================================
+       EMPTY STATE
+       ========================================================= */
+    .empty-state {
+      display: none; flex-direction: column; align-items: center;
+      justify-content: center; padding: 80px 0; color: var(--text3); gap: 10px;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header>
+  <div class="header-left">
+    <a href="#" class="logo">DevCMD</a>
+    <div class="search-wrap">
+      <svg class="ico" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="명령어, 설명 검색  (/)">
+    </div>
+    <select id="sortOrder" class="btn" style="font-size:11.5px; padding:0 8px;">
+      <option value="default">기본 순서</option>
+      <option value="recent">최근 추가순</option>
+      <option value="name">이름순</option>
+      <option value="fav">즐겨찾기 우선</option>
+    </select>
+  </div>
+  <div class="header-right">
+    <button id="exportBtn" class="btn btn-icon" title="내보내기 (JSON)">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+    </button>
+    <button id="importBtn" class="btn btn-icon" title="가져오기 (JSON)">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/></svg>
+    </button>
+    <input type="file" id="importFile" class="hidden" accept=".json">
+    <button id="favOnlyBtn" class="btn btn-fav">
+      <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      즐겨찾기
+    </button>
+    <button id="addBtn" class="btn btn-primary">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      명령어 추가
+    </button>
+    <button id="manageStacksBtn" class="btn btn-icon" title="스택 관리">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ===================== CATEGORY TABS (상단 — 언어 그룹) ===================== -->
+<div id="categoryTabs" class="cat-tabs"></div>
+
+<!-- ===================== LEFT SIDEBAR (프레임워크/라이브러리) ===================== -->
+<aside class="sidebar-l">
+  <div class="sidebar-label" id="leftLabel">Framework</div>
+  <div id="stackListEl"></div>
+</aside>
+
+<!-- ===================== RIGHT SIDEBAR (태그) ===================== -->
+<aside class="sidebar-r">
+  <div class="sidebar-label">Tags</div>
+  <div id="tagBar"></div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<main id="mainContent">
+  <div id="emptyState" class="empty-state">
+    <svg width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <p>일치하는 명령어가 없습니다.</p>
+  </div>
+</main>
+
+<!-- ===================== MODAL: 추가/수정 ===================== -->
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">명령어 추가</h3>
+      <button id="closeModal" class="action-btn">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>스택 *</label>
+        <select id="fStack"></select>
+      </div>
+      <div class="form-group">
+        <label>카테고리</label>
+        <input type="text" id="fCategory" placeholder="예: 실행, Database">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>명령어 제목 *</label>
+      <input type="text" id="fDesc" placeholder="어떤 명령어인가요?">
+    </div>
+    <div class="form-group">
+      <label>언제 사용하나요?</label>
+      <textarea id="fWhen" placeholder="상황이나 주의사항을 적어주세요."></textarea>
+    </div>
+    <div class="form-group">
+      <label>명령어 *</label>
+      <textarea id="fCmd" placeholder="실제 실행할 명령어를 입력하세요."></textarea>
+    </div>
+    <div class="form-group">
+      <label>태그 선택</label>
+      <div id="tagSelector" class="tag-selector"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="cancelBtn" class="btn">취소</button>
+      <button id="saveBtn" class="btn btn-primary">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: 스택 관리 ===================== -->
+<div id="stackModalOverlay" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>스택 관리</h3>
+      <button id="closeStackModal" class="action-btn">✕</button>
+    </div>
+    <div class="form-group">
+      <label>새 커스텀 스택 추가</label>
+      <div class="form-row" style="align-items:center;">
+        <input type="text" id="sLabel" placeholder="스택 이름 (예: Go, AWS)">
+        <input type="color" id="sColor" value="#8c877f" style="width:40px;height:34px;padding:2px;border-radius:6px;border:1px solid var(--border);cursor:pointer;">
+        <button id="addStackBtn" class="btn btn-primary" style="white-space:nowrap;">추가</button>
+      </div>
+    </div>
+    <div id="customStackListEl" style="margin-top:14px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+    <div class="modal-footer">
+      <button id="finishStackBtn" class="btn btn-primary">완료</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =============================================================
+   DEVCMD  Configuration
+   =============================================================
+   ▸ 카테고리 추가:  CATEGORIES 배열 + STACK_TO_CAT 매핑 추가
+   ▸ 스택 추가:      BASE_STACKS 배열 + STACK_TO_CAT 매핑 추가
+   ▸ 태그 추가:      ALL_TAGS 배열 + CSS .t-{id} 클래스 추가
+   ▸ 내장 명령어:    CMDS 배열에 항목 추가 (ID 범위 규칙 참고)
+   ============================================================= */
+
+// ── CATEGORIES (상단 탭) ──────────────────────────────────────────────
+// color: 탭 왼쪽 dot 색상
+const CATEGORIES = [
+  { id: 'all',      label: '전체',     color: '#8c877f' },
+  { id: 'frontend', label: 'Frontend', color: '#6340c0' },
+  { id: 'backend',  label: 'Backend',  color: '#0d7a78' },
+  { id: 'devops',   label: 'DevOps',   color: '#1d6fa4' },
+  { id: 'vcs',      label: 'VCS',      color: '#d4500a' },
+  { id: 'system',   label: 'System',   color: '#4a4640' },
+];
+
+// ── STACK → CATEGORY 매핑 ────────────────────────────────────────────
+// 새 스택 추가 시 이 맵에도 반드시 추가
+const STACK_TO_CAT = {
+  git:     'vcs',
+  docker:  'devops',
+  django:  'backend',
+  fastapi: 'backend',
+  nextjs:  'frontend',
+  flutter: 'frontend',
+  python:  'backend',
+  npm:     'frontend',
+  rust:    'system',
+  linux:   'system',
+};
+
+// ── BASE STACKS (좌측 사이드바) ─────────────────────────────────────
+// 새 스택 추가 시 STACK_TO_CAT도 함께 수정
+const BASE_STACKS = [
+  { id: 'git',     label: 'Git',       color: '#d4500a' },
+  { id: 'docker',  label: 'Docker',    color: '#1d6fa4' },
+  { id: 'django',  label: 'Django',    color: '#1a7a50' },
+  { id: 'fastapi', label: 'FastAPI',   color: '#0d7a78' },
+  { id: 'nextjs',  label: 'Next.js',   color: '#1c1a17' },
+  { id: 'flutter', label: 'Flutter',   color: '#6340c0' },
+  { id: 'python',  label: 'Python',    color: '#a06a00' },
+  { id: 'npm',     label: 'npm/yarn',  color: '#c0302a' },
+  { id: 'rust',    label: 'Rust',      color: '#b8420a' },
+  { id: 'linux',   label: 'Linux/CLI', color: '#4a4640' },
+];
+
+// ── TAGS (우측 사이드바) ─────────────────────────────────────────────
+// 새 태그 추가 시 CSS .t-{id} 클래스도 추가
+const ALL_TAGS = [
+  'setup','run','build','deploy',
+  'db','migrate','test','debug',
+  'git','package','docker','env',
+  'ci','log','network','security',
+  'perf','custom',
+];
+
+// ── BUILT-IN COMMANDS ────────────────────────────────────────────────
+// ID 범위: git 1~19, docker 20~39, django 40~59, fastapi 60~79,
+//          nextjs 80~99, npm 100~119, python 120~139, flutter 140~159,
+//          rust 160~179, linux 180~199  (다음 스택: 200~)
+const CMDS = [
+  // ── Git ──────────────────────────────────────────────────────────
+  { id:  1, stack:'git', category:'기초',        desc:'저장소 초기화',                  when:'새로운 프로젝트를 시작하거나 기존 디렉토리를 Git 저장소로 만들 때.',                                     cmd:'git init',                                                                                                     tags:['setup','git'] },
+  { id:  2, stack:'git', category:'기초',        desc:'원격 저장소 클론',               when:'GitHub 등의 원격 저장소를 로컬로 복제할 때.',                                                               cmd:'git clone <repository_url>',                                                                                   tags:['setup','git'] },
+  { id:  3, stack:'git', category:'변경 관리',   desc:'변경 파일 스테이징',             when:'파일 수정을 마치고 커밋을 준비할 때. . 은 모든 변경사항을 의미.',                                          cmd:'git add .\ngit add <file_path>',                                                                               tags:['git'] },
+  { id:  4, stack:'git', category:'변경 관리',   desc:'커밋 작성',                      when:'스테이징된 변경사항을 저장소 히스토리에 기록할 때.',                                                        cmd:'git commit -m "feat: commit message"',                                                                         tags:['git'] },
+  { id:  5, stack:'git', category:'변경 관리',   desc:'상태 확인',                      when:'현재 변경된 파일, 스테이징 여부, 브랜치 상태를 알고 싶을 때.',                                             cmd:'git status',                                                                                                   tags:['git','debug'] },
+  { id:  6, stack:'git', category:'변경 관리',   desc:'히스토리 확인',                  when:'이전 커밋 내역을 한 줄씩 간략하게 보고 싶을 때.',                                                          cmd:'git log --oneline --graph --all',                                                                              tags:['git','log'] },
+  { id:  7, stack:'git', category:'브랜치',      desc:'새 브랜치 생성 및 이동',         when:'새로운 기능을 개발하기 위해 별도의 작업 공간을 만들고 이동할 때.',                                          cmd:'git checkout -b <branch_name>\n# 최신: git switch -c <branch_name>',                                           tags:['git','setup'] },
+  { id:  8, stack:'git', category:'브랜치',      desc:'브랜치 병합 (Merge)',            when:'작업이 완료된 브랜치를 현재 브랜치(주로 main)에 반영할 때.',                                               cmd:'git merge <branch_name>',                                                                                      tags:['git'] },
+  { id:  9, stack:'git', category:'원격 저장소', desc:'원격 변경사항 가져오기 (Pull)', when:'팀원이 push한 최신 코드를 내 로컬 저장소에 반영할 때.',                                                    cmd:'git pull origin <branch_name>',                                                                                tags:['git'] },
+  { id: 10, stack:'git', category:'원격 저장소', desc:'변경사항 올리기 (Push)',        when:'로컬 커밋을 원격 저장소에 공유할 때.',                                                                       cmd:'git push origin <branch_name>',                                                                                tags:['git'] },
+  { id: 11, stack:'git', category:'복구',        desc:'파일 수정 취소 (Restore)',      when:'작업 중인 파일의 수정을 취소하고 마지막 커밋 상태로 되돌리고 싶을 때.',                                    cmd:'git restore <file_path>',                                                                                      tags:['git'] },
+  { id: 12, stack:'git', category:'복구',        desc:'커밋 되돌리기 (Reset)',         when:'마지막 커밋을 취소하고 파일을 스테이징 상태로 되돌릴 때 (--soft).',                                         cmd:'git reset --soft HEAD~1',                                                                                      tags:['git'] },
+  { id: 13, stack:'git', category:'브랜치',      desc:'브랜치 목록 확인',              when:'로컬 및 원격 브랜치 목록을 확인하고 싶을 때.',                                                              cmd:'git branch -a',                                                                                                tags:['git','log'] },
+  { id: 14, stack:'git', category:'원격 저장소', desc:'원격 저장소 연결 확인',         when:'현재 프로젝트에 연결된 원격지 주소를 확인할 때.',                                                           cmd:'git remote -v',                                                                                                tags:['git','setup'] },
+
+  // ── Docker ───────────────────────────────────────────────────────
+  { id: 20, stack:'docker', category:'컨테이너', desc:'컨테이너 실행 (백그라운드)',     when:'이미지를 기반으로 컨테이너를 생성하고 백그라운드(-d)에서 실행할 때.',                                      cmd:'docker run -d --name <name> <image>',                                                                          tags:['run','docker'] },
+  { id: 21, stack:'docker', category:'컨테이너', desc:'실행 중인 컨테이너 확인',        when:'현재 작동 중인 모든 컨테이너 목록을 보고 싶을 때.',                                                         cmd:'docker ps',                                                                                                    tags:['docker','log'] },
+  { id: 22, stack:'docker', category:'컨테이너', desc:'컨테이너 중지',                  when:'실행 중인 컨테이너를 안전하게 멈출 때.',                                                                    cmd:'docker stop <container_id>',                                                                                   tags:['docker'] },
+  { id: 23, stack:'docker', category:'이미지',   desc:'이미지 빌드',                    when:'Dockerfile을 기반으로 새로운 이미지를 생성할 때.',                                                          cmd:'docker build -t <image_name> .',                                                                               tags:['build','docker'] },
+  { id: 24, stack:'docker', category:'이미지',   desc:'이미지 목록 확인',               when:'로컬에 다운로드되거나 빌드된 이미지들을 확인할 때.',                                                        cmd:'docker images',                                                                                                tags:['docker'] },
+  { id: 25, stack:'docker', category:'Compose',  desc:'서비스 실행',                   when:'docker-compose.yml에 정의된 모든 서비스를 한 번에 실행할 때.',                                              cmd:'docker compose up -d',                                                                                         tags:['run','docker','setup'] },
+  { id: 26, stack:'docker', category:'Compose',  desc:'서비스 종료',                   when:'실행 중인 모든 서비스를 중지하고 컨테이너를 삭제할 때.',                                                    cmd:'docker compose down',                                                                                          tags:['docker'] },
+  { id: 27, stack:'docker', category:'Compose',  desc:'서비스 종료 + 볼륨 삭제',      when:'컨테이너뿐만 아니라 저장된 데이터(Volume)까지 모두 삭제하고 초기화할 때.',                                 cmd:'docker compose down -v',                                                                                       tags:['docker'] },
+  { id: 28, stack:'docker', category:'디버깅',   desc:'컨테이너 내부 접속',             when:'실행 중인 컨테이너 내부 쉘(bash/sh)에 직접 접속하여 상태를 확인할 때.',                                    cmd:'docker exec -it <container_id> /bin/bash',                                                                     tags:['docker','debug'] },
+  { id: 29, stack:'docker', category:'정리',     desc:'미사용 리소스 일괄 삭제',        when:'중지된 컨테이너, 사용되지 않는 네트워크, 이미지를 한 번에 정리할 때.',                                    cmd:'docker system prune -a',                                                                                       tags:['docker','debug'] },
+
+  // ── Django ───────────────────────────────────────────────────────
+  { id: 40, stack:'django', category:'프로젝트',  desc:'새 프로젝트 생성',             when:'Django 프로젝트 골격을 새로 만들 때.',                                                                       cmd:'django-admin startproject <project_name> .',                                                                   tags:['setup'] },
+  { id: 41, stack:'django', category:'프로젝트',  desc:'새 앱 생성',                   when:'기능 단위의 앱을 추가할 때.',                                                                                cmd:'python manage.py startapp <app_name>',                                                                         tags:['setup'] },
+  { id: 42, stack:'django', category:'실행',      desc:'개발 서버 실행',               when:'로컬에서 웹 서버를 구동하여 결과를 확인할 때.',                                                              cmd:'python manage.py runserver',                                                                                   tags:['run'] },
+  { id: 43, stack:'django', category:'Database',  desc:'마이그레이션 파일 생성',       when:'models.py의 변경사항을 감지하여 DB 설계도를 만들 때.',                                                      cmd:'python manage.py makemigrations',                                                                              tags:['db','migrate'] },
+  { id: 44, stack:'django', category:'Database',  desc:'마이그레이션 적용',            when:'만들어진 마이그레이션을 실제 DB 스키마에 반영할 때.',                                                       cmd:'python manage.py migrate',                                                                                     tags:['db','migrate'] },
+  { id: 45, stack:'django', category:'계정',      desc:'관리자 계정 생성',             when:'/admin 페이지에 접속할 슈퍼유저 계정을 만들 때.',                                                           cmd:'python manage.py createsuperuser',                                                                             tags:['setup','security'] },
+  { id: 46, stack:'django', category:'Database',  desc:'Django Shell 실행',           when:'Django 환경 내에서 파이썬 코드를 직접 실행하며 데이터를 조작할 때.',                                        cmd:'python manage.py shell',                                                                                       tags:['debug'] },
+  { id: 47, stack:'django', category:'배포',      desc:'정적 파일 수집',               when:'배포 전 모든 앱의 static 파일들을 한곳으로 모을 때.',                                                       cmd:'python manage.py collectstatic',                                                                               tags:['deploy'] },
+  { id: 48, stack:'django', category:'테스트',    desc:'테스트 실행',                  when:'작성한 unit test들을 모두 실행할 때.',                                                                       cmd:'python manage.py test',                                                                                        tags:['test'] },
+
+  // ── FastAPI ──────────────────────────────────────────────────────
+  { id: 60, stack:'fastapi', category:'실행',    desc:'개발 서버 실행 (Uvicorn)',     when:'코드 변경 시 자동 재시작(--reload) 옵션과 함께 서버를 띄울 때.',                                           cmd:'uvicorn main:app --reload',                                                                                    tags:['run'] },
+  { id: 61, stack:'fastapi', category:'설치',    desc:'의존성 설치',                  when:'FastAPI와 비동기 서버 uvicorn을 설치할 때.',                                                                 cmd:'pip install fastapi uvicorn',                                                                                  tags:['setup','package'] },
+  { id: 62, stack:'fastapi', category:'Alembic', desc:'마이그레이션 생성 → 적용 → 롤백', when:'SQLAlchemy 모델 변경을 DB에 반영할 때. autogenerate가 모델과 DB 스키마 차이를 자동 감지.',             cmd:'alembic init alembic\nalembic revision --autogenerate -m "add users"\nalembic upgrade head\nalembic downgrade -1', tags:['db','migrate'] },
+  { id: 63, stack:'fastapi', category:'실행',    desc:'프로덕션 실행',                when:'배포 환경에서 여러 개의 워커를 띄워 실행할 때.',                                                            cmd:'gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app',                                                      tags:['run','deploy'] },
+  { id: 64, stack:'fastapi', category:'테스트',  desc:'Pytest 실행',                  when:'작성된 비동기 API 테스트를 실행할 때.',                                                                      cmd:'pytest',                                                                                                       tags:['test'] },
+  { id: 65, stack:'fastapi', category:'문서',    desc:'Swagger UI 주소',              when:'서버 실행 후 자동 생성된 API 문서를 볼 수 있는 경로.',                                                      cmd:'http://127.0.0.1:8000/docs',                                                                                   tags:['debug'] },
+  { id: 66, stack:'fastapi', category:'문서',    desc:'ReDoc 주소',                   when:'대체 API 문서 페이지 경로.',                                                                                 cmd:'http://127.0.0.1:8000/redoc',                                                                                  tags:['debug'] },
+
+  // ── Next.js ──────────────────────────────────────────────────────
+  { id: 80, stack:'nextjs', category:'프로젝트', desc:'새 프로젝트 생성',             when:'Next.js 앱을 최신 사양(App Router, TS, Tailwind)으로 만들 때.',                                            cmd:'npx create-next-app@latest',                                                                                   tags:['setup'] },
+  { id: 81, stack:'nextjs', category:'실행',     desc:'개발 서버 실행',               when:'로컬에서 개발 중인 사이트를 실시간으로 확인할 때.',                                                          cmd:'npm run dev',                                                                                                  tags:['run'] },
+  { id: 82, stack:'nextjs', category:'빌드',     desc:'프로덕션 빌드',                when:'배포를 위해 최적화된 결과물을 생성할 때.',                                                                   cmd:'npm run build',                                                                                                tags:['build','deploy'] },
+  { id: 83, stack:'nextjs', category:'실행',     desc:'빌드 결과물 실행',             when:'빌드된 프로덕션 버전을 로컬에서 테스트할 때.',                                                               cmd:'npm run start',                                                                                                tags:['run','deploy'] },
+  { id: 84, stack:'nextjs', category:'분석',     desc:'코드 정적 분석 (Lint)',        when:'코드 스타일과 잠재적 오류를 체크할 때.',                                                                     cmd:'npm run lint',                                                                                                 tags:['debug'] },
+  { id: 85, stack:'nextjs', category:'패키지',   desc:'의존성 설치',                  when:'package.json의 모든 패키지를 다운로드할 때.',                                                                cmd:'npm install',                                                                                                  tags:['setup','package'] },
+  { id: 86, stack:'nextjs', category:'패키지',   desc:'패키지 추가',                  when:'특정 라이브러리를 설치할 때.',                                                                               cmd:'npm install <package_name>',                                                                                   tags:['package'] },
+
+  // ── npm/yarn ─────────────────────────────────────────────────────
+  { id: 100, stack:'npm', category:'패키지 관리', desc:'프로젝트 초기화',             when:'새로운 JS/TS 프로젝트를 시작할 때 package.json을 생성.',                                                    cmd:'npm init -y',                                                                                                  tags:['setup','package'] },
+  { id: 101, stack:'npm', category:'패키지 관리', desc:'패키지 전체 설치',            when:'모든 의존성을 설치할 때.',                                                                                   cmd:'npm install\n# yarn: yarn install',                                                                            tags:['setup','package'] },
+  { id: 102, stack:'npm', category:'패키지 관리', desc:'특정 패키지 설치',            when:'프로덕션용 라이브러리를 추가할 때.',                                                                         cmd:'npm install <name>\n# yarn: yarn add <name>',                                                                  tags:['package'] },
+  { id: 103, stack:'npm', category:'패키지 관리', desc:'개발용 패키지 설치',          when:'빌드나 개발 시에만 필요한 툴(린트, 테스트 등)을 추가할 때.',                                               cmd:'npm install -D <name>\n# yarn: yarn add -D <name>',                                                            tags:['package','debug'] },
+  { id: 104, stack:'npm', category:'실행',        desc:'스크립트 실행',               when:'package.json에 정의된 커스텀 명령어를 실행할 때.',                                                          cmd:'npm run <script_name>\n# yarn: yarn <script_name>',                                                            tags:['run'] },
+  { id: 105, stack:'npm', category:'패키지 관리', desc:'캐시 삭제',                   when:'패키지 설치 에러나 꼬임 현상을 해결하고 싶을 때.',                                                          cmd:'npm cache clean --force',                                                                                      tags:['debug'] },
+
+  // ── Python ───────────────────────────────────────────────────────
+  { id: 120, stack:'python', category:'가상환경', desc:'가상환경 생성',               when:'프로젝트별 독립된 패키지 환경을 만들 때.',                                                                   cmd:'python -m venv venv',                                                                                          tags:['setup','env'] },
+  { id: 121, stack:'python', category:'가상환경', desc:'가상환경 활성화',             when:'생성한 가상환경 내부로 진입할 때.',                                                                          cmd:'# Windows\n.\\venv\\Scripts\\activate\n# macOS/Linux\nsource venv/bin/activate',                              tags:['setup','env'] },
+  { id: 122, stack:'python', category:'패키지',   desc:'의존성 목록 저장',            when:'현재 설치된 패키지들을 파일로 기록할 때.',                                                                   cmd:'pip freeze > requirements.txt',                                                                                tags:['package'] },
+  { id: 123, stack:'python', category:'패키지',   desc:'의존성 목록 설치',            when:'기록된 파일로부터 패키지들을 일괄 설치할 때.',                                                               cmd:'pip install -r requirements.txt',                                                                              tags:['setup','package'] },
+  { id: 124, stack:'python', category:'실행',     desc:'파이썬 파일 실행',            when:'스크립트 파일을 직접 구동할 때.',                                                                            cmd:'python main.py',                                                                                               tags:['run'] },
+
+  // ── Flutter ──────────────────────────────────────────────────────
+  { id: 140, stack:'flutter', category:'프로젝트', desc:'새 프로젝트 생성',           when:'Flutter 앱의 기본 구조를 생성할 때.',                                                                        cmd:'flutter create <project_name>',                                                                                tags:['setup'] },
+  { id: 141, stack:'flutter', category:'진단',     desc:'개발 환경 진단',             when:'SDK 설치, 안드로이드 스튜디오 등 설정 상태를 체크할 때.',                                                   cmd:'flutter doctor',                                                                                               tags:['debug','setup'] },
+  { id: 142, stack:'flutter', category:'실행',     desc:'앱 실행',                    when:'연결된 디바이스나 에뮬레이터에서 앱을 구동할 때.',                                                           cmd:'flutter run',                                                                                                  tags:['run'] },
+  { id: 143, stack:'flutter', category:'패키지',   desc:'패키지 가져오기',            when:'pubspec.yaml에 정의된 라이브러리들을 설치할 때.',                                                            cmd:'flutter pub get',                                                                                              tags:['package'] },
+  { id: 144, stack:'flutter', category:'빌드',     desc:'APK 빌드',                   when:'안드로이드용 앱 설치 파일을 생성할 때.',                                                                     cmd:'flutter build apk --release',                                                                                  tags:['build','deploy'] },
+  { id: 145, stack:'flutter', category:'빌드',     desc:'iOS 빌드',                   when:'iOS용 아카이브 결과물을 생성할 때.',                                                                         cmd:'flutter build ios --release',                                                                                  tags:['build','deploy'] },
+  { id: 146, stack:'flutter', category:'정리',     desc:'빌드 결과물 삭제',           when:'빌드 폴더를 비우고 다시 깨끗하게 빌드하고 싶을 때.',                                                        cmd:'flutter clean',                                                                                                tags:['debug'] },
+
+  // ── Rust ─────────────────────────────────────────────────────────
+  { id: 160, stack:'rust', category:'프로젝트', desc:'새 프로젝트 생성',             when:'Cargo를 이용해 실행 가능한 바이너리 프로젝트를 만들 때.',                                                   cmd:'cargo new <project_name>',                                                                                     tags:['setup'] },
+  { id: 161, stack:'rust', category:'빌드',     desc:'빌드 가능 여부 체크',          when:'실제 컴파일을 하지 않고 문법 오류만 빠르게 확인하고 싶을 때.',                                              cmd:'cargo check',                                                                                                  tags:['debug'] },
+  { id: 162, stack:'rust', category:'빌드',     desc:'프로젝트 컴파일',              when:'소스 코드를 빌드할 때.',                                                                                     cmd:'cargo build',                                                                                                  tags:['build'] },
+  { id: 163, stack:'rust', category:'실행',     desc:'컴파일 및 실행',               when:'빌드와 실행을 한 번에 처리할 때.',                                                                           cmd:'cargo run',                                                                                                    tags:['run'] },
+  { id: 164, stack:'rust', category:'테스트',   desc:'테스트 실행',                  when:'단위 테스트 및 통합 테스트를 실행할 때.',                                                                    cmd:'cargo test',                                                                                                   tags:['test'] },
+
+  // ── Linux/CLI ────────────────────────────────────────────────────
+  { id: 180, stack:'linux', category:'파일/폴더', desc:'파일 목록 확인',             when:'현재 디렉토리의 파일과 정보를 리스트 형태로 볼 때.',                                                         cmd:'ls -al',                                                                                                       tags:['log'] },
+  { id: 181, stack:'linux', category:'파일/폴더', desc:'디렉토리 생성',              when:'새로운 폴더를 만들 때.',                                                                                     cmd:'mkdir <folder_name>',                                                                                          tags:[] },
+  { id: 182, stack:'linux', category:'네트워크',  desc:'포트 점유 확인',             when:'특정 포트(예: 8000)를 어떤 프로세스가 쓰고 있는지 알고 싶을 때.',                                          cmd:'lsof -i :8000\n# 혹은 netstat -tnlp | grep 8000',                                                             tags:['network','debug'] },
+  { id: 183, stack:'linux', category:'권한',      desc:'실행 권한 부여',             when:'스크립트 파일 등에 실행 권한을 줄 때.',                                                                      cmd:'chmod +x <file_name>',                                                                                         tags:['security'] },
+  { id: 184, stack:'linux', category:'검색',      desc:'내용 검색 (Grep)',           when:'파일 내부에서 특정 텍스트 패턴을 찾고 싶을 때.',                                                            cmd:'grep -r "search_text" .',                                                                                      tags:['debug'] },
+  { id: 185, stack:'linux', category:'시스템',    desc:'프로세스 강제 종료',         when:'응답 없는 프로세스를 PID를 이용해 종료할 때.',                                                               cmd:'kill -9 <pid>',                                                                                                tags:[] },
+  { id: 186, stack:'linux', category:'시스템',    desc:'디스크 사용량 확인',         when:'남은 저장 공간을 사람이 읽기 편한(h) 단위로 볼 때.',                                                        cmd:'df -h',                                                                                                        tags:['log'] },
+  { id: 187, stack:'linux', category:'파일/폴더', desc:'파일 복사',                  when:'파일이나 디렉토리를 다른 곳으로 복사할 때 (-r은 디렉토리).',                                                cmd:'cp -r <source> <destination>',                                                                                 tags:[] },
+  { id: 188, stack:'linux', category:'파일/폴더', desc:'파일 이동/이름 변경',        when:'파일을 옮기거나 이름을 바꿀 때.',                                                                            cmd:'mv <old_name> <new_name>',                                                                                     tags:[] },
+  { id: 189, stack:'linux', category:'파일/폴더', desc:'파일 삭제',                  when:'파일이나 디렉토리를 삭제할 때 (주의: 복구 불가).',                                                           cmd:'rm -rf <path>',                                                                                                tags:[] },
+];
+
+/* =============================================================
+   STATE
+   ============================================================= */
+let activeCategory = 'all';  // 상단 탭
+let activeStack    = 'all';  // 좌측 사이드바 ('all' = 카테고리 내 전체)
+let activeTag      = null;   // 우측 사이드바
+let favOnly        = false;
+let editId         = null;
+let selTags        = new Set();
+
+let customCmds   = JSON.parse(localStorage.getItem('dcmd_custom')  || '[]');
+let customStacks = JSON.parse(localStorage.getItem('dcmd_stacks')  || '[]');
+let favorites    = new Set(JSON.parse(localStorage.getItem('dcmd_favs') || '[]'));
+let nextId       = parseInt(localStorage.getItem('dcmd_nextid') || '2000');
+
+/* =============================================================
+   HELPERS
+   ============================================================= */
+function persist() {
+  localStorage.setItem('dcmd_custom',  JSON.stringify(customCmds));
+  localStorage.setItem('dcmd_favs',    JSON.stringify([...favorites]));
+  localStorage.setItem('dcmd_nextid',  String(nextId));
+}
+
+function getAllCmds()    { return [...CMDS, ...customCmds]; }
+function getAllStacks()  { return [...BASE_STACKS, ...customStacks]; }
+
+// 해당 카테고리에 속하는 스택 반환
+function getStacksForCategory(catId) {
+  if (catId === 'all') return getAllStacks();
+  return getAllStacks().filter(s => STACK_TO_CAT[s.id] === catId);
+}
+
+function matchesQuery(c, q) {
+  return c.desc.toLowerCase().includes(q)
+      || c.cmd.toLowerCase().includes(q)
+      || (c.when || '').toLowerCase().includes(q)
+      || c.tags.some(t => t.includes(q));
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* =============================================================
+   RENDER — Category Tabs (상단)
+   ============================================================= */
+function renderCategoryTabs() {
+  document.getElementById('categoryTabs').innerHTML = CATEGORIES.map(cat => `
+    <div class="cat-tab ${activeCategory === cat.id ? 'active' : ''}"
+         onclick="setCategory('${cat.id}')">
+      <span class="cat-dot" style="background:${cat.color}"></span>
+      ${cat.label}
+    </div>
+  `).join('');
+}
+
+/* =============================================================
+   RENDER — Left Sidebar (프레임워크)
+   ============================================================= */
+function renderLeftSidebar() {
+  const stacks   = getStacksForCategory(activeCategory);
+  const countMap = {};
+  getAllCmds().forEach(c => { countMap[c.stack] = (countMap[c.stack] || 0) + 1; });
+
+  const catLabel = activeCategory === 'all'
+    ? 'Framework'
+    : (CATEGORIES.find(c => c.id === activeCategory)?.label || 'Framework');
+  document.getElementById('leftLabel').textContent = catLabel;
+
+  document.getElementById('stackListEl').innerHTML = [
+    `<div class="stack-item ${activeStack === 'all' ? 'active' : ''}" onclick="setActiveStack('all')">
+       <span class="stack-dot" style="background:var(--text3)"></span>
+       전체
+     </div>`,
+    ...stacks.map(s => `
+      <div class="stack-item ${activeStack === s.id ? 'active' : ''}" onclick="setActiveStack('${s.id}')">
+        <span class="stack-dot" style="background:${s.color}"></span>
+        ${s.label}
+        <span class="stack-count">${countMap[s.id] || 0}</span>
+      </div>
+    `)
+  ].join('');
+}
+
+/* =============================================================
+   RENDER — Right Sidebar (태그)
+   ============================================================= */
+function renderTagBar() {
+  document.getElementById('tagBar').innerHTML = [
+    `<div class="tag-item ${activeTag === null ? 'active' : ''}" onclick="setTag(null)">#전체</div>`,
+    ...ALL_TAGS.map(t => `
+      <div class="tag-item ${activeTag === t ? 'active' : ''}" onclick="setTag('${t}')">#${t}</div>
+    `)
+  ].join('');
+}
+
+/* =============================================================
+   RENDER — Main Content
+   ============================================================= */
+function renderAll() {
+  const q    = document.getElementById('searchInput').value.toLowerCase().trim();
+  const sort = document.getElementById('sortOrder').value;
+  const main = document.getElementById('mainContent');
+
+  // ── Filter ──────────────────────────────────────────────────────
+  let list = getAllCmds().filter(c => {
+    if (favOnly && !favorites.has(c.id)) return false;
+
+    // 카테고리 필터 (상단 탭)
+    if (activeCategory !== 'all') {
+      // 매핑된 카테고리가 없는 커스텀 스택은 'all'에서만 노출
+      if (STACK_TO_CAT[c.stack] !== activeCategory) return false;
+    }
+
+    // 스택 필터 (좌측 사이드바)
+    if (activeStack !== 'all' && c.stack !== activeStack) return false;
+
+    // 태그 필터 (우측 사이드바)
+    if (activeTag && !c.tags.includes(activeTag)) return false;
+
+    // 검색
+    if (q && !matchesQuery(c, q)) return false;
+
+    return true;
+  });
+
+  // ── Sort ────────────────────────────────────────────────────────
+  if (sort === 'recent') {
+    list.sort((a, b) => b.id - a.id);
+  } else if (sort === 'name') {
+    list.sort((a, b) => a.desc.localeCompare(b.desc));
+  } else if (sort === 'fav') {
+    list.sort((a, b) => (favorites.has(b.id) ? 1 : 0) - (favorites.has(a.id) ? 1 : 0) || a.id - b.id);
+  }
+
+  // ── Clear & Empty State ─────────────────────────────────────────
+  main.querySelectorAll('.stack-group').forEach(el => el.remove());
+  const empty = document.getElementById('emptyState');
+  if (list.length === 0) { empty.style.display = 'flex'; return; }
+  empty.style.display = 'none';
+
+  // ── Group: Stack → Category ─────────────────────────────────────
+  const grouped = {};
+  list.forEach(c => {
+    if (!grouped[c.stack]) grouped[c.stack] = {};
+    const cat = c.category || '기타';
+    if (!grouped[c.stack][cat]) grouped[c.stack][cat] = [];
+    grouped[c.stack][cat].push(c);
+  });
+
+  // ── Render (스택 순서 고정) ─────────────────────────────────────
+  getAllStacks().forEach(s => {
+    if (!grouped[s.id]) return;
+    const stackEl = document.createElement('div');
+    stackEl.className = 'stack-group';
+    stackEl.innerHTML = `
+      <div class="stack-group-header">
+        <span class="stack-badge" style="background:${s.color}">${s.id}</span>
+        <span class="stack-group-title">${s.label}</span>
+      </div>
+    `;
+    Object.entries(grouped[s.id]).forEach(([cat, items]) => {
+      const catEl = document.createElement('div');
+      catEl.className = 'category-section';
+      catEl.innerHTML = `<div class="category-title">${cat}</div>`;
+      const grid = document.createElement('div');
+      grid.className = 'command-grid';
+      items.forEach(item => grid.appendChild(createCard(item)));
+      catEl.appendChild(grid);
+      stackEl.appendChild(catEl);
+    });
+    main.appendChild(stackEl);
+  });
+}
+
+/* =============================================================
+   CARD BUILDER
+   ============================================================= */
+function createCard(c) {
+  const el       = document.createElement('div');
+  el.className   = 'card';
+  const isFav    = favorites.has(c.id);
+  const isCustom = c.id >= 2000;
+
+  el.innerHTML = `
+    <div class="card-header">
+      <div class="card-title">${escapeHtml(c.desc)}</div>
+      <div class="card-actions">
+        <button class="action-btn fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(${c.id},event)" title="즐겨찾기">
+          <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+        </button>
+        <button class="action-btn" onclick="copyById(${c.id},event)" title="복사">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 4v12a2 2 0 002 2h8a2 2 0 002-2V7.24a2 2 0 00-.59-1.42L15.42 1.83a2 2 0 00-1.42-.59H10a2 2 0 00-2 2z"/><path d="M16 18v2a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2"/></svg>
+        </button>
+        <button class="action-btn" onclick="openEditModal(${c.id},event)" title="수정">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        ${isCustom ? `
+        <button class="action-btn" onclick="deleteCmd(${c.id},event)" title="삭제">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>` : ''}
+      </div>
+    </div>
+    ${c.when ? `<div class="card-when">${escapeHtml(c.when)}</div>` : ''}
+    <div class="card-cmd-box">
+      <code class="card-cmd">${escapeHtml(c.cmd)}</code>
+    </div>
+    <div class="card-tags">
+      ${c.tags.map(t => `<span class="tag-badge t-${t}">#${t}</span>`).join('')}
+    </div>
+  `;
+  return el;
+}
+
+/* =============================================================
+   EVENT HANDLERS — Navigation
+   ============================================================= */
+window.setCategory = (id) => {
+  activeCategory = id;
+  activeStack    = 'all';   // 카테고리 바뀌면 스택 필터 초기화
+  renderCategoryTabs();
+  renderLeftSidebar();
+  renderAll();
+};
+
+window.setActiveStack = (id) => {
+  activeStack = id;
+  renderLeftSidebar();
+  renderAll();
+};
+
+window.setTag = (t) => {
+  activeTag = t;
+  renderTagBar();
+  renderAll();
+};
+
+/* =============================================================
+   EVENT HANDLERS — Card Actions
+   ============================================================= */
+window.toggleFav = (id, e) => {
+  e.stopPropagation();
+  favorites.has(id) ? favorites.delete(id) : favorites.add(id);
+  persist();
+  renderAll();
+};
+
+window.copyById = (id, e) => {
+  e.stopPropagation();
+  const c = getAllCmds().find(c => c.id === id);
+  if (!c) return;
+  navigator.clipboard.writeText(c.cmd);
+  const btn  = e.currentTarget;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="#1a7a50" stroke-width="3" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>';
+  setTimeout(() => btn.innerHTML = orig, 1500);
+};
+
+window.deleteCmd = (id, e) => {
+  e.stopPropagation();
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+  customCmds = customCmds.filter(c => c.id !== id);
+  favorites.delete(id);
+  persist();
+  renderAll();
+};
+
+/* =============================================================
+   MODAL — Add / Edit Command
+   ============================================================= */
+const modal    = document.getElementById('modalOverlay');
+const fStack   = document.getElementById('fStack');
+const tagSelEl = document.getElementById('tagSelector');
+
+function initModalSelects() {
+  fStack.innerHTML = getAllStacks()
+    .map(s => `<option value="${s.id}">${s.label}</option>`)
+    .join('');
+
+  tagSelEl.innerHTML = ALL_TAGS
+    .map(t => `<div class="tag-choice" data-tag="${t}" onclick="toggleTagChoice('${t}')">#${t}</div>`)
+    .join('');
+}
+
+function syncTagUI() {
+  tagSelEl.querySelectorAll('.tag-choice').forEach(el =>
+    el.classList.toggle('selected', selTags.has(el.dataset.tag))
+  );
+}
+
+window.toggleTagChoice = (t) => {
+  selTags.has(t) ? selTags.delete(t) : selTags.add(t);
+  syncTagUI();
+};
+
+function openModal(item = null) {
+  editId = item ? item.id : null;
+  document.getElementById('modalTitle').innerText = editId ? '명령어 수정' : '명령어 추가';
+  initModalSelects();
+
+  fStack.value = item?.stack ?? (activeStack !== 'all' ? activeStack : (BASE_STACKS[0]?.id || 'git'));
+  document.getElementById('fCategory').value = item?.category ?? '';
+  document.getElementById('fDesc').value     = item?.desc    ?? '';
+  document.getElementById('fWhen').value     = item?.when    ?? '';
+  document.getElementById('fCmd').value      = item?.cmd     ?? '';
+
+  selTags = new Set(item?.tags ?? []);
+  syncTagUI();
+  modal.style.display = 'flex';
+}
+
+function closeModal() { modal.style.display = 'none'; }
+
+window.openEditModal = (id, e) => {
+  e.stopPropagation();
+  openModal(getAllCmds().find(c => c.id === id));
+};
+
+document.getElementById('addBtn').onclick    = () => openModal();
+document.getElementById('closeModal').onclick = closeModal;
+document.getElementById('cancelBtn').onclick  = closeModal;
+modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+document.getElementById('saveBtn').onclick = () => {
+  const stack = fStack.value;
+  const desc  = document.getElementById('fDesc').value.trim();
+  const cmd   = document.getElementById('fCmd').value.trim();
+  if (!desc || !cmd) { alert('제목과 명령어는 필수 입력 사항입니다.'); return; }
+
+  const payload = {
+    stack,
+    category: document.getElementById('fCategory').value.trim() || '기타',
+    desc,
+    when: document.getElementById('fWhen').value.trim(),
+    cmd,
+    tags: [...selTags],
+  };
+
+  if (editId !== null) {
+    const idx = customCmds.findIndex(c => c.id === editId);
+    if (idx >= 0) customCmds[idx] = { ...customCmds[idx], ...payload };
+    else          customCmds.push({ id: nextId++, ...payload }); // 내장 명령어 수정 → 커스텀으로 저장
+  } else {
+    customCmds.push({ id: nextId++, ...payload });
+  }
+
+  persist();
+  closeModal();
+  renderLeftSidebar(); // 카운트 갱신
+  renderAll();
+};
+
+/* =============================================================
+   MODAL — Manage Custom Stacks
+   ============================================================= */
+const stackModal = document.getElementById('stackModalOverlay');
+
+document.getElementById('manageStacksBtn').onclick = () => {
+  renderCustomStackList();
+  stackModal.style.display = 'flex';
+};
+document.getElementById('closeStackModal').onclick  = () => stackModal.style.display = 'none';
+document.getElementById('finishStackBtn').onclick   = () => stackModal.style.display = 'none';
+stackModal.onclick = (e) => { if (e.target === stackModal) stackModal.style.display = 'none'; };
+
+function renderCustomStackList() {
+  const el = document.getElementById('customStackListEl');
+  el.innerHTML = customStacks.length === 0
+    ? '<div style="padding:18px;text-align:center;color:var(--text3);font-size:13px;">추가된 커스텀 스택이 없습니다.</div>'
+    : customStacks.map(s => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:9px;height:9px;border-radius:2px;background:${s.color};"></div>
+          <span style="font-weight:500;font-size:13px;">${s.label}</span>
+          <span style="font-size:11px;color:var(--text3);font-family:var(--font-mono);">${s.id}</span>
+        </div>
+        <button class="action-btn" onclick="deleteCustomStack('${s.id}')">✕</button>
+      </div>
+    `).join('');
+}
+
+document.getElementById('addStackBtn').onclick = () => {
+  const label = document.getElementById('sLabel').value.trim();
+  const color = document.getElementById('sColor').value;
+  if (!label) return;
+  const id = label.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!id || [...BASE_STACKS, ...customStacks].some(s => s.id === id)) {
+    alert('이미 존재하거나 유효하지 않은 스택 이름입니다.');
+    return;
+  }
+  customStacks.push({ id, label, color });
+  localStorage.setItem('dcmd_stacks', JSON.stringify(customStacks));
+  document.getElementById('sLabel').value = '';
+  renderCustomStackList();
+  renderLeftSidebar();
+};
+
+window.deleteCustomStack = (id) => {
+  if (!confirm('스택을 삭제하시겠습니까? 해당 스택의 명령어는 유지됩니다.')) return;
+  customStacks = customStacks.filter(s => s.id !== id);
+  localStorage.setItem('dcmd_stacks', JSON.stringify(customStacks));
+  if (activeStack === id) activeStack = 'all';
+  renderCustomStackList();
+  renderLeftSidebar();
+  renderAll();
+};
+
+/* =============================================================
+   SEARCH / SORT / FAV TOGGLE
+   ============================================================= */
+document.getElementById('searchInput').oninput = renderAll;
+document.getElementById('sortOrder').onchange  = renderAll;
+
+document.getElementById('favOnlyBtn').onclick = () => {
+  favOnly = !favOnly;
+  document.getElementById('favOnlyBtn').classList.toggle('active', favOnly);
+  renderAll();
+};
+
+/* =============================================================
+   EXPORT / IMPORT
+   ============================================================= */
+document.getElementById('exportBtn').onclick = () => {
+  const data = {
+    version:         '1.1',
+    exported_at:     new Date().toISOString(),
+    favorites:       [...favorites],
+    custom_commands: customCmds,
+    next_id:         nextId,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `devcmd_export_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+
+document.getElementById('importFile').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data.custom_commands)) throw new Error('올바르지 않은 데이터 형식입니다.');
+      if (!confirm('데이터를 가져오시겠습니까? 기존 커스텀 명령어에 병합됩니다.')) return;
+
+      const existingIds = new Set(customCmds.map(c => c.id));
+      data.custom_commands.forEach(c => { if (!existingIds.has(c.id)) customCmds.push(c); });
+      if (Array.isArray(data.favorites)) data.favorites.forEach(id => favorites.add(id));
+      if (typeof data.next_id === 'number') nextId = Math.max(nextId, data.next_id);
+
+      persist();
+      renderLeftSidebar();
+      renderAll();
+      alert('데이터를 성공적으로 가져왔습니다.');
+    } catch (err) {
+      alert('파일 읽기 실패: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+};
+
+/* =============================================================
+   KEYBOARD SHORTCUTS
+   ============================================================= */
+window.addEventListener('keydown', (e) => {
+  const tag = document.activeElement.tagName;
+  if (e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+  if (e.key === 'Escape') closeModal();
+});
+
+/* =============================================================
+   INIT
+   ============================================================= */
+renderCategoryTabs();
+renderLeftSidebar();
+renderTagBar();
+renderAll();
+</script>
+</body>
+</html>
